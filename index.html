@@ -9,8 +9,8 @@
     <!-- Update Firebase scripts to use modules if needed -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-
+import { getDatabase, ref, set, onValue, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+        
         const firebaseConfig = {
             apiKey: "AIzaSyChFldpFtzq9zV4hE1uilMOWFwF_3Yqj1w",
             authDomain: "hawklist-86d73.firebaseapp.com",
