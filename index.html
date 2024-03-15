@@ -114,7 +114,6 @@
       <button id="undoBtn" class="bg-red-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4" style="display: none;">Undo</button>
   </div>
 
-
 <script>
     // Firebase Database Reference
     const dbRef = firebase.database().ref();
@@ -123,12 +122,14 @@
     let lastDeletedIndex = null;
 
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM fully loaded and parsed');
         loadTasks(currentList);
         document.querySelectorAll('.list-btn').forEach(button => {
             button.addEventListener('click', function() {
                 document.querySelectorAll('.list-btn').forEach(btn => btn.classList.remove('selected'));
                 this.classList.add('selected');
                 currentList = this.getAttribute('data-list');
+                console.log('Current list set to:', currentList);
                 document.getElementById('tasksList').innerHTML = '';
                 loadTasks(currentList);
             });
@@ -139,12 +140,16 @@
     document.getElementById('addTask').addEventListener('click', function() {
         const newTaskValue = document.getElementById('newTask').value;
         if (newTaskValue.trim() !== '') {
+            console.log('Adding task:', newTaskValue);
             addTask(newTaskValue, true);
             document.getElementById('newTask').value = '';
+        } else {
+            console.log('No task to add: Input is empty or whitespace');
         }
     });
 
     function addTask(taskContent, save = false) {
+        console.log('addTask called with:', taskContent);
         const tasksList = document.getElementById('tasksList');
         const newTask = document.createElement('li');
         newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
@@ -160,23 +165,32 @@
     }
 
     function saveTasks(listName) {
+        console.log('saveTasks called for list:', listName);
         const tasksList = document.getElementById('tasksList');
         const tasks = Array.from(tasksList.children).map(task => task.querySelector('.task-text').textContent);
-        dbRef.child(listName).set(tasks);
+        console.log('Saving tasks:', tasks);
+        dbRef.child(listName).set(tasks)
+             .then(() => console.log('Tasks saved successfully to Firebase.'))
+             .catch(error => console.error('Error saving tasks to Firebase:', error));
         if (tasksList.children.length === 0) {
             document.getElementById('undoBtn').style.display = 'none';
         }
     }
 
     function loadTasks(listName) {
+        console.log('loadTasks called for list:', listName);
         dbRef.child(listName).on('value', snapshot => {
             const tasks = snapshot.val();
+            console.log('Tasks loaded from Firebase:', tasks);
             document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
             if (tasks) {
                 tasks.forEach(task => addTask(task));
             }
+        }, error => {
+            console.error('Error loading tasks from Firebase:', error);
         });
     }
 </script>
+
 </body>
 </html>
