@@ -1,179 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawk List</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="list.ico">
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    <script>
-      const firebaseConfig = {
-        apiKey: "AIzaSyChFldpFtzq9zV4hE1uilMOWFwF_3Yqj1w",
-        authDomain: "hawklist-86d73.firebaseapp.com",
-        databaseURL: "https://hawklist-86d73-default-rtdb.firebaseio.com",
-        projectId: "hawklist-86d73",
-        storageBucket: "hawklist-86d73.appspot.com",
-        messagingSenderId: "636285057270",
-        appId: "1:636285057270:web:1b5b42f651a964b12994d7"
-      };
-      // Initialize Firebase
-      const app = firebase.initializeApp(firebaseConfig);
-    </script>
-    <style>
-                body {
-            background-color: silver;
-        }
-        .btn {
-            width: 30px;
-            height: 30px;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0;
-        }
-        .list-btn {
-            border: 1px solid black;
-            color: white;
-            background-color: gray;
-        }
-        .list-btn.selected {
-            background-color: darkorange;
-            color: black;
-        }
-        .add-btn {
-            background-color: black;
-            color: white;
-        }
-        .up-dn-btn {
-            background-color: lightblue;
-            border: 1px solid black;
-            color: white;
-        }
-        .x-btn {
-            background-color: lightgreen;
-            color: black;
-            border: 1px solid black;
-        }
-        .del-btn {
-            background-color: red;
-            color: black;
-            border: 1px solid black;
-        }
-        #tasksList {
-            list-style-type: none;
-            padding: 0;
-            max-width: 600px; /* Adjust as needed */
-            margin: auto;
-        }
-        #tasksList li {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 10px 0;
-            word-wrap: break-word;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .task-text {
-            flex-grow: 1;
-            margin-left: 10px;
-        }
-      .undo-btn-container {
-          display: flex;
-          justify-content: center; /* Center the button horizontally */
-          width: 100%; /* Ensure the container spans the full width */
-      }
+<script>
+    // Firebase Database Reference
+    const dbRef = firebase.database().ref();
+    let currentList = 'work'; // Default list
+    let lastDeletedTask = null;
+    let lastDeletedIndex = null;
 
-    </style>
-</head>
-<body>
-    <!-- Your existing HTML -->
-    <div class="container mx-auto p-4 text-center">
-        <img src="list.gif" alt="List" class="mx-auto mb-4">
-        <div class="flex justify-center gap-2 mb-4">
-            <button class="list-btn py-2 px-4 rounded" data-list="work">Work</button>
-            <button class="list-btn py-2 px-4 rounded" data-list="personal">Personal</button>
-            <button class="list-btn py-2 px-4 rounded" data-list="research">Research</button>
-            <button class="list-btn py-2 px-4 rounded" data-list="a">A</button>
-            <button class="list-btn py-2 px-4 rounded" data-list="b">B</button>
-        </div>
-        <div class="mb-4">
-            <input type="text" id="newTask" placeholder="Add new task" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <button id="addTask" class="add-btn py-2 px-4 rounded">Add</button>
-        </div>
-        <ul id="tasksList">
-            <!-- Tasks will be added here dynamically -->
-        </ul>
-        
-    </div>
-  <!-- Add a container div around the Undo button for alignment -->
-  <div id="undoBtnContainer" class="undo-btn-container">
-      <button id="undoBtn" class="bg-red-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4" style="display: none;">Undo</button>
-  </div>
-
-
-
-    <script>
-        // Firebase Database Reference
-        const dbRef = firebase.database().ref();
-        let currentList = 'work'; // Default list
-        let lastDeletedTask = null;
-        let lastDeletedIndex = null;
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTasks(currentList);
-            document.querySelectorAll('.list-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    document.querySelectorAll('.list-btn').forEach(btn => btn.classList.remove('selected'));
-                    this.classList.add('selected');
-                    currentList = this.getAttribute('data-list');
-                    document.getElementById('tasksList').innerHTML = '';
-                    loadTasks(currentList);
-                });
+    document.addEventListener('DOMContentLoaded', function() {
+        loadTasks(currentList);
+        document.querySelectorAll('.list-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.list-btn').forEach(btn => btn.classList.remove('selected'));
+                this.classList.add('selected');
+                currentList = this.getAttribute('data-list');
+                document.getElementById('tasksList').innerHTML = '';
+                loadTasks(currentList);
             });
-            document.querySelector('[data-list="work"]').click(); // Default selected list
         });
-        document.getElementById('addTask').addEventListener('click', function() {
-            const newTaskValue = document.getElementById('newTask').value;
-            if (newTaskValue.trim() !== '') {
-                addTask(newTaskValue, true);
-                document.getElementById('newTask').value = '';
+        document.querySelector('[data-list="work"]').click(); // Default selected list
+    });
+
+    document.getElementById('addTask').addEventListener('click', function() {
+        const newTaskValue = document.getElementById('newTask').value;
+        if (newTaskValue.trim() !== '') {
+            addTask(newTaskValue, true);
+            document.getElementById('newTask').value = '';
+        }
+    });
+
+    function addTask(taskContent, save = false) {
+        const tasksList = document.getElementById('tasksList');
+        const newTask = document.createElement('li');
+        newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
+        const taskText = document.createElement('span');
+        taskText.textContent = taskContent;
+        taskText.className = 'task-text';
+        newTask.appendChild(taskText);
+        tasksList.appendChild(newTask);
+
+        if (save) {
+            saveTasks(currentList);
+        }
+    }
+
+    function saveTasks(listName) {
+        const tasksList = document.getElementById('tasksList');
+        const tasks = Array.from(tasksList.children).map(task => task.querySelector('.task-text').textContent);
+        dbRef.child(listName).set(tasks);
+        if (tasksList.children.length === 0) {
+            document.getElementById('undoBtn').style.display = 'none';
+        }
+    }
+
+    function loadTasks(listName) {
+        dbRef.child(listName).on('value', snapshot => {
+            const tasks = snapshot.val();
+            document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
+            if (tasks) {
+                tasks.forEach(task => addTask(task));
             }
         });
-        document.getElementById('undoBtn').addEventListener('click', function() {
-            // Undo functionality remains the same
-        });
-        function addTask(taskContent, save = false) {
-            // Task addition logic remains the same
-            if (save) {
-                saveTasks(currentList);
-            }
-        }
-        function saveTasks(listName) {
-            const tasksList = document.getElementById('tasksList');
-            const tasks = [];
-            tasksList.querySelectorAll('li').forEach(task => {
-                const text = task.querySelector('.task-text').textContent;
-                tasks.push(text);
-            });
-            dbRef.child(listName).set(tasks);
-            if (tasksList.children.length === 0) {
-                document.getElementById('undoBtn').style.display = 'none';
-            }
-        }
-        function loadTasks(listName) {
-            dbRef.child(listName).on('value', snapshot => {
-                const tasks = snapshot.val();
-                document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
-                if (tasks) {
-                    tasks.forEach(task => addTask(task));
-                }
-            });
-        }
-    </script>
-</body>
-</html>
-
-
+    }
+</script>
