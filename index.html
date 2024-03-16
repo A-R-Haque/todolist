@@ -97,18 +97,21 @@
     </div>
 
     <script type="module">
+        // Firebase setup
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
-            authDomain: "hawklist2.firebaseapp.com",
-            projectId: "hawklist2",
-            storageBucket: "hawklist2.appspot.com",
-            messagingSenderId: "60663152972",
-            appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -136,7 +139,7 @@
             }
         });
 
-       async function addTask(taskContent, save = false) {
+        async function addTask(taskContent, save = false) {
     const tasksList = document.getElementById('tasksList');
     const newTask = document.createElement('li');
     newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
@@ -195,31 +198,31 @@
 }
 
 
-       async function saveTasks(listName) {
-    const tasksList = document.getElementById('tasksList');
-    const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
-        return { text: task.querySelector('.task-text').textContent };
-    });
+        async function saveTasks(listName) {
+            const tasksList = document.getElementById('tasksList');
+            const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
+                return { text: task.querySelector('.task-text').textContent };
+            });
 
-    // Save the array of tasks to a single document identified by listName
-    const listDocRef = doc(db, "lists", listName);
-    await setDoc(listDocRef, { tasks: tasks });
-}
+            // Save the array of tasks to a single document identified by listName
+            const listDocRef = doc(db, "lists", listName);
+            await setDoc(listDocRef, { tasks: tasks });
+        }
 
         async function loadTasks(listName) {
-    const listDocRef = doc(db, "lists", listName);
-    const docSnap = await getDoc(listDocRef);
+            const listDocRef = doc(db, "lists", listName);
+            const docSnap = await getDoc(listDocRef);
 
-    document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
+            document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
 
-    if (docSnap.exists()) {
-        docSnap.data().tasks.forEach(task => {
-            addTask(task.text);
-        });
-    } else {
-        console.log("No such document!");
-    }
-}
+            if (docSnap.exists()) {
+                docSnap.data().tasks.forEach(task => {
+                    addTask(task.text); // Note: modify addTask to not re-save tasks on load
+                });
+            } else {
+                console.log("No such document!");
+            }
+        }
     </script>
 </body>
 </html>
