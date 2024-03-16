@@ -6,11 +6,11 @@
     <title>Hawk List</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="list.ico">
-    <!-- Update Firebase scripts to use modules if needed -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-        
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyChFldpFtzq9zV4hE1uilMOWFwF_3Yqj1w",
             authDomain: "hawklist-86d73.firebaseapp.com",
@@ -21,11 +21,92 @@ import { getDatabase, ref, set, onValue, onChildAdded } from "https://www.gstati
             appId: "1:636285057270:web:1b5b42f651a964b12994d7"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const dbRef = ref(db);
+
+        window.onload = () => {
+            const dbRef = ref(db);
+            setupApp(dbRef);
+        };
+
+        function setupApp(dbRef) {
+            let currentList = 'work'; // Default list
+            let lastDeletedTask = null;
+            let lastDeletedIndex = null;
+
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM fully loaded and parsed');
+                loadTasks(currentList, dbRef);
+                document.querySelectorAll('.list-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        document.querySelectorAll('.list-btn').forEach(btn => btn.classList.remove('selected'));
+                        this.classList.add('selected');
+                        currentList = this.getAttribute('data-list');
+                        console.log('Current list set to:', currentList);
+                        document.getElementById('tasksList').innerHTML = '';
+                        loadTasks(currentList, dbRef);
+                    });
+                });
+                document.querySelector('[data-list="work"]').click(); // Default selected list
+            });
+
+            document.getElementById('addTask').addEventListener('click', function() {
+                const newTaskValue = document.getElementById('newTask').value;
+                if (newTaskValue.trim() !== '') {
+                    console.log('Adding task:', newTaskValue);
+                    addTask(newTaskValue, true, dbRef, currentList);
+                    document.getElementById('newTask').value = '';
+                } else {
+                    console.log('No task to add: Input is empty or whitespace');
+                }
+            });
+
+            function addTask(taskContent, save, dbRef, listName) {
+                console.log('addTask called with:', taskContent);
+                const tasksList = document.getElementById('tasksList');
+                const newTask = document.createElement('li');
+                newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
+                const taskText = document.createElement('span');
+                taskText.textContent = taskContent;
+                taskText.className = 'task-text';
+                newTask.appendChild(taskText);
+                tasksList.appendChild(newTask);
+
+                if (save) {
+                    saveTasks(listName, dbRef);
+                }
+            }
+
+            function saveTasks(listName, dbRef) {
+                console.log('saveTasks called for list:', listName);
+                const tasksList = document.getElementById('tasksList');
+                const tasks = Array.from(tasksList.children).map(task => task.querySelector('.task-text').textContent);
+                console.log('Saving tasks:', tasks);
+                set(ref(db, listName), tasks)
+                    .then(() => console.log('Tasks saved successfully to Firebase.'))
+                    .catch(error => console.error('Error saving tasks to Firebase:', error));
+                if (tasksList.children.length === 0) {
+                    document.getElementById('undoBtn').style.display = 'none';
+                }
+            }
+
+            function loadTasks(listName, dbRef) {
+                console.log('loadTasks called for list:', listName);
+                onValue(ref(db, listName), snapshot => {
+                    const tasks = snapshot.val();
+                    console.log('Tasks loaded from Firebase:', tasks);
+                    document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
+                    if (tasks) {
+                        tasks.forEach(task => addTask(task, false, dbRef, listName));
+                    }
+                }, error => {
+                    console.error('Error loading tasks from Firebase:', error);
+                });
+            }
+        }
     </script>
-    <style>
+        <style>
                 body {
             background-color: silver;
         }
@@ -92,6 +173,7 @@ import { getDatabase, ref, set, onValue, onChildAdded } from "https://www.gstati
       }
 
     </style>
+
 </head>
 <body>
     <!-- Your existing HTML -->
@@ -194,4 +276,5 @@ import { getDatabase, ref, set, onValue, onChildAdded } from "https://www.gstati
         }
     </script>
 </body>
+
 </html>
