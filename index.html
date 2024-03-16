@@ -225,6 +225,11 @@
                 console.log("No such document!");
             }
         }
+
+        window.addEventListener('beforeunload', async function(event) {
+            await saveTasks(currentList);
+        });
+        
     </script>
 </body>
 </html>
