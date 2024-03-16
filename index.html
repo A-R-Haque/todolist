@@ -6,7 +6,6 @@
     <title>Hawk List</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="list.ico">
-
     <style>
         body {
             background-color: silver;
@@ -50,7 +49,7 @@
         #tasksList {
             list-style-type: none;
             padding: 0;
-            max-width: 600px; /* Adjust as needed */
+            max-width: 600px;
             margin: auto;
         }
         #tasksList li {
@@ -67,12 +66,11 @@
             flex-grow: 1;
             margin-left: 10px;
         }
-      .undo-btn-container {
-          display: flex;
-          justify-content: center; /* Center the button horizontally */
-          width: 100%; /* Ensure the container spans the full width */
-      }
-
+        .undo-btn-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -89,18 +87,21 @@
             <input type="text" id="newTask" placeholder="Add new task" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             <button id="addTask" class="add-btn py-2 px-4 rounded">Add</button>
         </div>
-        <ul id="tasksList">
-            <!-- Tasks will be added here dynamically -->
-        </ul>
-        
+        <ul id="tasksList"></ul>
     </div>
-  <!-- Add a container div around the Undo button for alignment -->
-  <div id="undoBtnContainer" class="undo-btn-container">
-      <button id="undoBtn" class="bg-red-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4" style="display: none;">Undo</button>
-  </div>
-
-
+    <div id="undoBtnContainer" class="undo-btn-container">
+        <button id="undoBtn" class="bg-red-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4" style="display: none;">Undo</button>
+    </div>
     <script>
+        // Replace 'YOUR_API_KEY' and 'YOUR_BIN_ID' with your actual API Key and Bin ID
+        const API_KEY = '$2a$10$Ls/cc7hpFYxyk.Rc4ooRzu9bH22oUF9Wd2J4lChByjbA.3zSsyX/O';
+        const BIN_ID = '65f504c1266cfc3fde991360';
+        const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Master-Key': API_KEY
+        };
+
         let currentList = 'work'; // Default list
         let lastDeletedTask = null;
         let lastDeletedIndex = null;
@@ -116,7 +117,6 @@
                     loadTasks(currentList);
                 });
             });
-            document.querySelector('[data-list="work"]').click(); // Default selected list
         });
 
         document.getElementById('addTask').addEventListener('click', function() {
@@ -207,17 +207,29 @@
                 const text = task.querySelector('.task-text').textContent;
                 tasks.push(text);
             });
-            localStorage.setItem(listName, JSON.stringify(tasks));
-            if (tasksList.children.length === 0) {
-                document.getElementById('undoBtn').style.display = 'none';
-            }
+            // Create a structure to store tasks under their respective list
+            const tasksToSave = { [listName]: tasks };
+
+            fetch(BIN_URL, {
+                method: 'PUT',
+                headers: headers,
+                body: JSON.stringify(tasksToSave)
+            })
+            .then(response => response.json())
+            .then(data => console.log('List updated successfully'))
+            .catch(error => console.error('Error updating list:', error));
         }
 
         function loadTasks(listName) {
-            const tasks = JSON.parse(localStorage.getItem(listName));
-            if (tasks) {
-                tasks.forEach(task => addTask(task));
-            }
+            fetch(`${BIN_URL}/latest`, { headers: headers })
+                .then(response => response.json())
+                .then(data => {
+                    const tasks = data.record[listName];
+                    if (tasks) {
+                        tasks.forEach(task => addTask(task));
+                    }
+                })
+                .catch(error => console.error('Error fetching list:', error));
         }
     </script>
 </body>
