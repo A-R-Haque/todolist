@@ -66,11 +66,6 @@
             flex-grow: 1;
             margin-left: 10px;
         }
-        .undo-btn-container {
-            display: flex;
-            justify-content: center; /* Center the button horizontally */
-            width: 100%; /* Ensure the container spans the full width */
-        }
     </style>
 </head>
 <body>
@@ -92,10 +87,6 @@
         </ul>
     </div>
 
-    <div id="undoBtnContainer" class="undo-btn-container">
-        <button id="undoBtn" class="bg-red-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4" style="display: none;">Undo</button>
-    </div>
-
     <script type="module">
         // Firebase setup
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
@@ -103,7 +94,7 @@
 
         // Firebase configuration
         const firebaseConfig = {
-              apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
+              aapiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
 
   authDomain: "hawklist2.firebaseapp.com",
 
@@ -116,6 +107,7 @@
   messagingSenderId: "60663152972",
 
   appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
+
 
         };
 
@@ -196,10 +188,7 @@
             });
 
             const deleteBtn = createButton('Del', 'del-btn', function() {
-                lastDeletedTask = newTask; // Removed unnecessary cloning
-                lastDeletedIndex = Array.from(tasksList.children).indexOf(newTask);
-                newTask.remove();
-                document.getElementById('undoBtn').style.display = 'block';
+                lastDeletedTask =                 newTask.remove();
                 saveTasks(currentList); // Assume we always want to save the state after a delete.
             });
 
@@ -221,7 +210,6 @@
                 await saveTasks(currentList);
             }
         }
-
 
         async function saveTasks(listName) {
             const tasksList = document.getElementById('tasksList');
@@ -255,7 +243,7 @@
         window.addEventListener('beforeunload', async function(event) {
             await saveTasks(currentList);
         });
-        
     </script>
 </body>
 </html>
+
