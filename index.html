@@ -210,13 +210,34 @@
             }
         }
 
-        async function saveTasks(listName) {
-            // Firestore task saving logic
-        }
+        // Save tasks to Firestore
+async function saveTasks(listName) {
+    const tasksList = document.getElementById('tasksList');
+    const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
+        return { text: task.querySelector('.task-text').textContent };
+    });
 
-        async function loadTasks(listName) {
-            // Firestore task loading logic
-        }
+    // Save the array of tasks to a single document identified by listName
+    const listDocRef = doc(db, "lists", listName);
+    await setDoc(listDocRef, { tasks: tasks });
+}
+
+// Load tasks from Firestore
+async function loadTasks(listName) {
+    const listDocRef = doc(db, "lists", listName);
+    const docSnap = await getDoc(listDocRef);
+
+    document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
+
+    if (docSnap.exists()) {
+        docSnap.data().tasks.forEach(task => {
+            addTask(task.text);
+        });
+    } else {
+        console.log("No such document!");
+    }
+}
+
     </script>
 </body>
 </html>
