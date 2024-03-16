@@ -67,11 +67,12 @@
             flex-grow: 1;
             margin-left: 10px;
         }
-        .undo-btn-container {
-            display: flex;
-            justify-content: center; /* Center the button horizontally */
-            width: 100%; /* Ensure the container spans the full width */
-        }
+      .undo-btn-container {
+          display: flex;
+          justify-content: center; /* Center the button horizontally */
+          width: 100%; /* Ensure the container spans the full width */
+      }
+
     </style>
 </head>
 <body>
@@ -91,81 +92,133 @@
         <ul id="tasksList">
             <!-- Tasks will be added here dynamically -->
         </ul>
+        
     </div>
-    <!-- Add a container div around the Undo button for alignment -->
-    <div id="undoBtnContainer" class="undo-btn-container">
-        <button id="undoBtn" class="bg-red-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4" style="display: none;">Undo</button>
-    </div>
+  <!-- Add a container div around the Undo button for alignment -->
+  <div id="undoBtnContainer" class="undo-btn-container">
+      <button id="undoBtn" class="bg-red-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4" style="display: none;">Undo</button>
+  </div>
 
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-      import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyDzz5ntTqlUxtIuqPqrKe2GLB1uhULNH8E",
-        authDomain: "hawklist1.firebaseapp.com",
-        projectId: "hawklist1",
-        storageBucket: "hawklist1.appspot.com",
-        messagingSenderId: "159024401494",
-        appId: "1:159024401494:web:f22fe237dc86a82a59fff7"
-      };
+    <script>
+        let currentList = 'work'; // Default list
+        let lastDeletedTask = null;
+        let lastDeletedIndex = null;
 
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-
-      // Modified JavaScript to use Firestore
-      let currentList = 'work'; // Default list
-
-      document.addEventListener('DOMContentLoaded', function() {
-          loadTasks(currentList);
-          document.querySelectorAll('.list-btn').forEach(button => {
-              button.addEventListener('click', function() {
-                  document.querySelectorAll('.list-btn').forEach(btn => btn.classList.remove('selected'));
-                  this.classList.add('selected');
-                  currentList = this.getAttribute('data-list');
-                  document.getElementById('tasksList').innerHTML = '';
-                  loadTasks(currentList);
-              });
-          });
-          document.querySelector('[data-list="work"]').click(); // Default selected list
-      });
-
-      document.getElementById('addTask').addEventListener('click', async function() {
-          const newTaskValue = document.getElementById('newTask').value;
-          if (newTaskValue.trim() !== '') {
-              await addTaskToFirestore(newTaskValue, currentList);
-              document.getElementById('newTask').value = '';
-              loadTasks(currentList); // Reload tasks to reflect the new addition
-          }
-      });
-
-      async function addTaskToFirestore(taskContent, listName) {
-        try {
-          await addDoc(collection(db, "tasks"), {
-            content: taskContent,
-            listName: listName,
-            timestamp: new Date()
-          });
-        } catch (error) {
-          console.error("Error adding document: ", error);
-        }
-      }
-
-      async function loadTasks(listName) {
-        const tasksList = document.getElementById('tasksList');
-        tasksList.innerHTML = ''; // Clear the list before adding new items
-        const q = query(collection(db, "tasks"), where("listName", "==", listName));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
-          const taskData = doc.data();
-          addTask(taskData.content); // Here we're only displaying the task content. Adjust as needed.
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTasks(currentList);
+            document.querySelectorAll('.list-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.list-btn').forEach(btn => btn.classList.remove('selected'));
+                    this.classList.add('selected');
+                    currentList = this.getAttribute('data-list');
+                    document.getElementById('tasksList').innerHTML = '';
+                    loadTasks(currentList);
+                });
+            });
+            document.querySelector('[data-list="work"]').click(); // Default selected list
         });
-      }
 
-      // You might need to update or add more functionality based on your requirements
+        document.getElementById('addTask').addEventListener('click', function() {
+            const newTaskValue = document.getElementById('newTask').value;
+            if (newTaskValue.trim() !== '') {
+                addTask(newTaskValue, true);
+                document.getElementById('newTask').value = '';
+            }
+        });
+
+        document.getElementById('undoBtn').addEventListener('click', function() {
+            if (lastDeletedTask !== null && lastDeletedIndex !== null) {
+                const tasksList = document.getElementById('tasksList');
+                const children = Array.from(tasksList.children);
+                if (lastDeletedIndex >= children.length) {
+                    tasksList.appendChild(lastDeletedTask);
+                } else {
+                    tasksList.insertBefore(lastDeletedTask, children[lastDeletedIndex] || null);
+                }
+                lastDeletedTask = null;
+                lastDeletedIndex = null;
+                this.style.display = 'none'; // Hide the undo button after restoring
+                saveTasks(currentList);
+            }
+        });
+
+        function addTask(taskContent, save = false) {
+            const tasksList = document.getElementById('tasksList');
+            const newTask = document.createElement('li');
+            newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'flex items-center mr-2';
+
+            function createButton(text, classes, onClick) {
+                const button = document.createElement('button');
+                button.textContent = text;
+                button.className = `btn ${classes}`;
+                button.addEventListener('click', onClick);
+                return button;
+            }
+
+            const moveUpBtn = createButton('Up', 'up-dn-btn', function() {
+                if (newTask.previousElementSibling) {
+                    tasksList.insertBefore(newTask, newTask.previousElementSibling);
+                    saveTasks(currentList);
+                }
+            });
+
+            const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
+                if (newTask.nextElementSibling) {
+                    tasksList.insertBefore(newTask.nextElementSibling, newTask);
+                    saveTasks(currentList);
+                }
+            });
+
+            const crossOffBtn = createButton('X', 'x-btn', function() {
+                newTask.classList.toggle('line-through');
+            });
+
+            const deleteBtn = createButton('Del', 'del-btn', function() {
+                lastDeletedTask = newTask.cloneNode(true);
+                lastDeletedIndex = Array.from(tasksList.children).indexOf(newTask);
+                newTask.remove();
+                document.getElementById('undoBtn').style.display = 'block';
+                saveTasks(currentList);
+            });
+
+            const taskText = document.createElement('span');
+            taskText.textContent = taskContent;
+            taskText.className = 'task-text';
+            btnGroup.appendChild(moveUpBtn);
+            btnGroup.appendChild(moveDownBtn);
+            btnGroup.appendChild(crossOffBtn);
+            btnGroup.appendChild(deleteBtn);
+            newTask.appendChild(btnGroup);
+            newTask.appendChild(taskText);
+            tasksList.appendChild(newTask);
+
+            if (save) {
+                saveTasks(currentList);
+            }
+        }
+
+        function saveTasks(listName) {
+            const tasksList = document.getElementById('tasksList');
+            const tasks = [];
+            tasksList.querySelectorAll('li').forEach(task => {
+                const text = task.querySelector('.task-text').textContent;
+                tasks.push(text);
+            });
+            localStorage.setItem(listName, JSON.stringify(tasks));
+            if (tasksList.children.length === 0) {
+                document.getElementById('undoBtn').style.display = 'none';
+            }
+        }
+
+        function loadTasks(listName) {
+            const tasks = JSON.parse(localStorage.getItem(listName));
+            if (tasks) {
+                tasks.forEach(task => addTask(task));
+            }
+        }
     </script>
 </body>
 </html>
