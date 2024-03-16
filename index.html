@@ -116,6 +116,7 @@
   messagingSenderId: "60663152972",
 
   appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
+
         };
 
         // Initialize Firebase
@@ -140,15 +141,21 @@
             await loadTasks(currentList); // Load the default "work" list tasks
         });
 
+        document.addEventListener('DOMContentLoaded', async function() {
+    const workButton = document.querySelector('[data-list="work"]');
+    workButton.classList.add('selected'); // Add 'selected' class to indicate it's pressed by default
+    await loadTasks('work'); // Load the "Work" list by default
+});
+
         document.getElementById('addTask').addEventListener('click', async function() {
             const newTaskValue = document.getElementById('newTask').value;
             if (newTaskValue.trim() !== '') {
-                addTask(newTaskValue, false, true); // removed await for consistency since addTask isn't async
+                addTask(newTaskValue, true); // removed await for consistency since addTask isn't async
                 document.getElementById('newTask').value = '';
             }
         });
 
-        async function addTask(taskContent, crossedOff, save = false) {
+        async function addTask(taskContent, save = false) {
             const tasksList = document.getElementById('tasksList');
             const newTask = document.createElement('li');
             newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
@@ -181,15 +188,15 @@
 
             const crossOffBtn = createButton('X', 'x-btn', function() {
                 newTask.classList.toggle('line-through');
-                save && saveTasks(currentList);
+                // Not saving to Firestore on cross-off, but you could if you want to persist this state.
             });
 
             const deleteBtn = createButton('Del', 'del-btn', function() {
-                lastDeletedTask = newTask;
+                lastDeletedTask = newTask; // Removed unnecessary cloning
                 lastDeletedIndex = Array.from(tasksList.children).indexOf(newTask);
                 newTask.remove();
                 document.getElementById('undoBtn').style.display = 'block';
-                save && saveTasks(currentList);
+                saveTasks(currentList); // Assume we always want to save the state after a delete.
             });
 
             // Add text content and buttons to the task element
@@ -199,11 +206,6 @@
             btnGroup.append(moveUpBtn, moveDownBtn, crossOffBtn, deleteBtn);
             newTask.append(btnGroup, taskText);
             tasksList.appendChild(newTask);
-
-            // Apply the cross-off state if passed in
-            if (crossedOff) {
-                newTask.classList.add('line-through');
-            }
 
             // Save tasks to Firestore if save flag is true
             if (save) {
@@ -215,10 +217,7 @@
         async function saveTasks(listName) {
             const tasksList = document.getElementById('tasksList');
             const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
-                return { 
-                    text: task.querySelector('.task-text').textContent,
-                    crossedOff: task.classList.contains('line-through') // Include cross-off state
-                };
+                return { text: task.querySelector('.task-text').textContent };
             });
 
             // Save the array of tasks to a single document identified by listName
@@ -234,7 +233,7 @@
 
             if (docSnap.exists()) {
                 docSnap.data().tasks.forEach(task => {
-                    addTask(task.text, task.crossedOff); // Pass cross-off state to addTask function
+                    addTask(task.text); // Note: modify addTask to not re-save tasks on load
                 });
             } else {
                 console.log("No such document!");
