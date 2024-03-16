@@ -103,12 +103,12 @@
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
-            authDomain: "hawklist2.firebaseapp.com",
-            projectId: "hawklist2",
-            storageBucket: "hawklist2.appspot.com",
-            messagingSenderId: "60663152972",
-            appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
+            apiKey: "your_api_key",
+            authDomain: "your_auth_domain",
+            projectId: "your_project_id",
+            storageBucket: "your_storage_bucket",
+            messagingSenderId: "your_messaging_sender_id",
+            appId: "your_app_id"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -137,6 +137,9 @@
             }
         });
 
+        let lastDeletedTask;
+        let lastDeletedIndex;
+
         async function addTask(taskContent, save) {
             const tasksList = document.getElementById('tasksList');
             const newTask = document.createElement('li');
@@ -158,59 +161,6 @@
                 document.getElementById('undoBtn').style.display = 'block';
                 await updateTasksAfterDeletion(currentList, index);
             });
-
-                    document.getElementById('addTask').addEventListener('click', async function() {
-            const newTaskValue = document.getElementById('newTask').value;
-            if (newTaskValue.trim() !== '') {
-                addTask(newTaskValue, true); // removed await for consistency since addTask isn't async
-                document.getElementById('newTask').value = '';
-            }
-        });
-
-        async function addTask(taskContent, save = false) {
-    const tasksList = document.getElementById('tasksList');
-    const newTask = document.createElement('li');
-    newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
-    const btnGroup = document.createElement('div');
-    btnGroup.className = 'flex items-center mr-2';
-
-    // Function to create a button
-    function createButton(text, classes, onClick) {
-        const button = document.createElement('button');
-        button.textContent = text;
-        button.className = `btn ${classes}`;
-        button.addEventListener('click', onClick);
-        return button;
-    }
-
-    // Create Up, Down, Cross-off, and Delete buttons
-    const moveUpBtn = createButton('Up', 'up-dn-btn', function() {
-        if (newTask.previousElementSibling) {
-            tasksList.insertBefore(newTask, newTask.previousElementSibling);
-            save && saveTasks(currentList);
-        }
-    });
-
-    const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
-        if (newTask.nextElementSibling) {
-            tasksList.insertBefore(newTask.nextElementSibling, newTask);
-            save && saveTasks(currentList);
-        }
-    });
-
-    const crossOffBtn = createButton('X', 'x-btn', function() {
-        newTask.classList.toggle('line-through');
-        // Not saving to Firestore on cross-off, but you could if you want to persist this state.
-    });
-
-    const deleteBtn = createButton('Del', 'del-btn', function() {
-        lastDeletedTask = newTask.cloneNode(true);
-        lastDeletedIndex = Array.from(tasksList.children).indexOf(newTask);
-        newTask.remove();
-        document.getElementById('undoBtn').style.display = 'block';
-        saveTasks(currentList); // Assume we always want to save the state after a delete.
-    });
-
 
             const taskText = document.createElement('span');
             taskText.textContent = taskContent;
