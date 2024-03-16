@@ -141,6 +141,12 @@
             await loadTasks(currentList); // Load the default "work" list tasks
         });
 
+        document.addEventListener('DOMContentLoaded', async function() {
+    const workButton = document.querySelector('[data-list="work"]');
+    workButton.classList.add('selected'); // Add 'selected' class to indicate it's pressed by default
+    await loadTasks('work'); // Load the "Work" list by default
+});
+
         document.getElementById('addTask').addEventListener('click', async function() {
             const newTaskValue = document.getElementById('newTask').value;
             if (newTaskValue.trim() !== '') {
