@@ -72,7 +72,6 @@
             width: 100%; /* Ensure the container spans the full width */
         }
     </style>
-
 </head>
 <body>
     <div class="container mx-auto p-4 text-center">
@@ -97,24 +96,26 @@
         <button id="undoBtn" class="bg-red-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mt-4" style="display: none;">Undo</button>
     </div>
 
-
     <script type="module">
+        // Firebase setup
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "your_api_key",
-            authDomain: "your_auth_domain",
-            projectId: "your_project_id",
-            storageBucket: "your_storage_bucket",
-            messagingSenderId: "your_messaging_sender_id",
-            appId: "your_app_id"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let currentList = 'work'; // Initialize currentList with 'work'
+        let currentList = 'work'; // Default list
 
         document.addEventListener('DOMContentLoaded', async function() {
             document.querySelectorAll('.list-btn').forEach(button => {
@@ -126,84 +127,97 @@
                     await loadTasks(currentList);
                 });
             });
-            await loadTasks(currentList);
+            
+            await loadTasks(currentList); // Load the default "work" list tasks
         });
 
         document.getElementById('addTask').addEventListener('click', async function() {
-            const newTaskValue = document.getElementById('newTask').value.trim();
-            if (newTaskValue) {
-                addTask(newTaskValue, true);
+            const newTaskValue = document.getElementById('newTask').value;
+            if (newTaskValue.trim() !== '') {
+                addTask(newTaskValue, true); // removed await for consistency since addTask isn't async
                 document.getElementById('newTask').value = '';
             }
         });
 
-        let lastDeletedTask;
-        let lastDeletedIndex;
+        async function addTask(taskContent, save = false) {
+    const tasksList = document.getElementById('tasksList');
+    const newTask = document.createElement('li');
+    newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'flex items-center mr-2';
 
-        async function addTask(taskContent, save) {
-            const tasksList = document.getElementById('tasksList');
-            const newTask = document.createElement('li');
-            newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
-            const btnGroup = document.createElement('div');
-            btnGroup.className = 'flex items-center mr-2';
+    // Function to create a button
+    function createButton(text, classes, onClick) {
+        const button = document.createElement('button');
+        button.textContent = text;
+        button.className = `btn ${classes}`;
+        button.addEventListener('click', onClick);
+        return button;
+    }
 
-            function createButton(text, classes, onClick) {
-                const button = document.createElement('button');
-                button.textContent = text;
-                button.className = `btn ${classes}`;
-                button.addEventListener('click', onClick);
-                return button;
-            }
-
-            const deleteBtn = createButton('Del', 'del-btn', async function() {
-                const index = Array.from(tasksList.children).indexOf(newTask);
-                newTask.remove();
-                document.getElementById('undoBtn').style.display = 'block';
-                await updateTasksAfterDeletion(currentList, index);
-            });
-
-            const taskText = document.createElement('span');
-            taskText.textContent = taskContent;
-            taskText.className = 'task-text';
-            btnGroup.append(deleteBtn);
-            newTask.append(btnGroup, taskText);
-            tasksList.appendChild(newTask);
-
-            if (save) {
-                await saveTasks(currentList);
-            }
+    // Create Up, Down, Cross-off, and Delete buttons
+    const moveUpBtn = createButton('Up', 'up-dn-btn', function() {
+        if (newTask.previousElementSibling) {
+            tasksList.insertBefore(newTask, newTask.previousElementSibling);
+            save && saveTasks(currentList);
         }
+    });
 
-        async function updateTasksAfterDeletion(listName, deletedTaskIndex) {
-            const tasksList = document.getElementById('tasksList');
-            const updatedTasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
-                return { text: task.querySelector('.task-text').textContent };
-            });
-
-            const listDocRef = doc(db, "lists", listName);
-            await setDoc(listDocRef, { tasks: updatedTasks });
+    const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
+        if (newTask.nextElementSibling) {
+            tasksList.insertBefore(newTask.nextElementSibling, newTask);
+            save && saveTasks(currentList);
         }
+    });
+
+    const crossOffBtn = createButton('X', 'x-btn', function() {
+        newTask.classList.toggle('line-through');
+        // Not saving to Firestore on cross-off, but you could if you want to persist this state.
+    });
+
+    const deleteBtn = createButton('Del', 'del-btn', function() {
+        lastDeletedTask = newTask.cloneNode(true);
+        lastDeletedIndex = Array.from(tasksList.children).indexOf(newTask);
+        newTask.remove();
+        document.getElementById('undoBtn').style.display = 'block';
+        saveTasks(currentList); // Assume we always want to save the state after a delete.
+    });
+
+    // Add text content and buttons to the task element
+    const taskText = document.createElement('span');
+    taskText.textContent = taskContent;
+    taskText.className = 'task-text';
+    btnGroup.append(moveUpBtn, moveDownBtn, crossOffBtn, deleteBtn);
+    newTask.append(btnGroup, taskText);
+    tasksList.appendChild(newTask);
+
+    // Save tasks to Firestore if save flag is true
+    if (save) {
+        await saveTasks(currentList);
+    }
+}
+
 
         async function saveTasks(listName) {
             const tasksList = document.getElementById('tasksList');
-            const tasks = Array.from(tasksList.querySelectorAll('li')).map((task, index) => ({
-                text: task.querySelector('.task-text').textContent,
-                order: index // Add order to maintain task order
-            }));
+            const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
+                return { text: task.querySelector('.task-text').textContent };
+            });
 
-            const listDocRef = doc(db, "lists", listName); // Changed collection name to 'lists'
-            await setDoc(listDocRef, { tasks });
+            // Save the array of tasks to a single document identified by listName
+            const listDocRef = doc(db, "lists", listName);
+            await setDoc(listDocRef, { tasks: tasks });
         }
 
         async function loadTasks(listName) {
-            const listDocRef = doc(db, "lists", listName); // Ensure collection name matches 'lists'
+            const listDocRef = doc(db, "lists", listName);
             const docSnap = await getDoc(listDocRef);
 
             document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
 
             if (docSnap.exists()) {
                 docSnap.data().tasks.forEach(task => {
-                    addTask(task.text, false); // Pass false to prevent immediate save on load
+                    addTask(task.text); // Note: modify addTask to not re-save tasks on load
                 });
             } else {
                 console.log("No such document!");
