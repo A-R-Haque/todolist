@@ -6,7 +6,7 @@
     <title>Hawk List</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="list.ico">
-     <style>
+    <style>
         body {
             background-color: silver;
         }
@@ -66,16 +66,15 @@
             flex-grow: 1;
             margin-left: 10px;
         }
-      .undo-btn-container {
-          display: flex;
-          justify-content: center; /* Center the button horizontally */
-          width: 100%; /* Ensure the container spans the full width */
-      }
-
+        .undo-btn-container {
+            display: flex;
+            justify-content: center; /* Center the button horizontally */
+            width: 100%; /* Ensure the container spans the full width */
+        }
     </style>
 </head>
 <body>
-       <div class="container mx-auto p-4 text-center">
+    <div class="container mx-auto p-4 text-center">
         <img src="list.gif" alt="List" class="mx-auto mb-4">
         <div class="flex justify-center gap-2 mb-4">
             <button class="list-btn py-2 px-4 rounded" data-list="work">Work</button>
@@ -91,7 +90,6 @@
         <ul id="tasksList">
             <!-- Tasks will be added here dynamically -->
         </ul>
-        
     </div>
 
     <div id="undoBtnContainer" class="undo-btn-container">
@@ -99,11 +97,9 @@
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
             authDomain: "hawklist2.firebaseapp.com",
@@ -113,17 +109,12 @@
             appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Your modified JavaScript functions to use Firestore
         let currentList = 'work'; // Default list
-        let lastDeletedTask = null;
-        let lastDeletedIndex = null;
 
         document.addEventListener('DOMContentLoaded', async function() {
-            await loadTasks(currentList);
             document.querySelectorAll('.list-btn').forEach(button => {
                 button.addEventListener('click', async function() {
                     document.querySelectorAll('.list-btn').forEach(btn => btn.classList.remove('selected'));
@@ -133,25 +124,18 @@
                     await loadTasks(currentList);
                 });
             });
-            document.querySelector('[data-list="work"]').click(); // Default selected list
+            
+            await loadTasks(currentList); // Load the default "work" list tasks
         });
 
         document.getElementById('addTask').addEventListener('click', async function() {
             const newTaskValue = document.getElementById('newTask').value;
             if (newTaskValue.trim() !== '') {
-                await addTask(newTaskValue, true);
+                addTask(newTaskValue, true); // removed await for consistency since addTask isn't async
                 document.getElementById('newTask').value = '';
             }
         });
 
-        document.getElementById('undoBtn').addEventListener('click', async function() {
-            if (lastDeletedTask !== null && lastDeletedIndex !== null) {
-                // Firestore does not directly support undo. This example removes the undo functionality.
-                console.log("Undo functionality needs a different approach with Firestore.");
-            }
-        });
-
-        // Function to add a task
         async function addTask(taskContent, save = false) {
            const tasksList = document.getElementById('tasksList');
             const newTask = document.createElement('li');
@@ -210,8 +194,7 @@
             }
         }
 
-        // Save tasks to Firestore
-async function saveTasks(listName) {
+       async function saveTasks(listName) {
     const tasksList = document.getElementById('tasksList');
     const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
         return { text: task.querySelector('.task-text').textContent };
@@ -222,8 +205,7 @@ async function saveTasks(listName) {
     await setDoc(listDocRef, { tasks: tasks });
 }
 
-// Load tasks from Firestore
-async function loadTasks(listName) {
+        async function loadTasks(listName) {
     const listDocRef = doc(db, "lists", listName);
     const docSnap = await getDoc(listDocRef);
 
@@ -237,7 +219,6 @@ async function loadTasks(listName) {
         console.log("No such document!");
     }
 }
-
     </script>
 </body>
 </html>
