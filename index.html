@@ -102,6 +102,9 @@
             newTask.appendChild(taskText);
             tasksList.appendChild(newTask);
             saveTasks();
+            // Modify the addTask call within loadTasks to not trigger saving
+tasks.forEach(task => addTask(task, false)); // Pass false to avoid saving during load
+
         }
 
         function saveTasks() {
@@ -119,23 +122,33 @@
         }
 
         function loadTasks() {
-            fetch(`${BIN_URL}/latest`, { headers: headers })
-                .then(response => response.json())
-                .then(data => {
-                    const tasks = data.record.tasks || [];
-                    document.getElementById('tasksList').innerHTML = '';
-                    tasks.forEach(task => {
-                        const newTask = document.createElement('li');
-                        newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
-                        const taskText = document.createElement('span');
-                        taskText.textContent = task;
-                        taskText.className = 'task-text';
-                        newTask.appendChild(taskText);
-                        document.getElementById('tasksList').appendChild(newTask);
-                    });
-                })
-                .catch(error => console.error('Error fetching list:', error));
-        }
+    fetch(`${BIN_URL}/latest`, { headers })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Loaded data:", data); // Debugging line
+            const tasks = data.record.tasks || [];
+            document.getElementById('tasksList').innerHTML = '';
+            tasks.forEach(addTask);
+        })
+        .catch(error => console.error('Error fetching list:', error));
+}
+        function saveTasks() {
+    const tasksList = document.getElementById('tasksList');
+    const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => task.innerText.trim());
+
+    console.log("Saving tasks:", tasks); // Debugging line
+    fetch(BIN_URL, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({ tasks })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Save response:", data); // Debugging line
+    })
+    .catch(error => console.error('Error updating list:', error));
+}
+        
     </script>
 </body>
 </html>
