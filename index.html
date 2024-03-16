@@ -116,6 +116,8 @@
         const db = getFirestore(app);
 
         let currentList = 'work'; // Default list
+        let lastDeletedTask;
+        let lastDeletedIndex;
 
         document.addEventListener('DOMContentLoaded', async function() {
             document.querySelectorAll('.list-btn').forEach(button => {
@@ -140,62 +142,62 @@
         });
 
         async function addTask(taskContent, save = false) {
-    const tasksList = document.getElementById('tasksList');
-    const newTask = document.createElement('li');
-    newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
-    const btnGroup = document.createElement('div');
-    btnGroup.className = 'flex items-center mr-2';
+            const tasksList = document.getElementById('tasksList');
+            const newTask = document.createElement('li');
+            newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'flex items-center mr-2';
 
-    // Function to create a button
-    function createButton(text, classes, onClick) {
-        const button = document.createElement('button');
-        button.textContent = text;
-        button.className = `btn ${classes}`;
-        button.addEventListener('click', onClick);
-        return button;
-    }
+            // Function to create a button
+            function createButton(text, classes, onClick) {
+                const button = document.createElement('button');
+                button.textContent = text;
+                button.className = `btn ${classes}`;
+                button.addEventListener('click', onClick);
+                return button;
+            }
 
-    // Create Up, Down, Cross-off, and Delete buttons
-    const moveUpBtn = createButton('Up', 'up-dn-btn', function() {
-        if (newTask.previousElementSibling) {
-            tasksList.insertBefore(newTask, newTask.previousElementSibling);
-            save && saveTasks(currentList);
+            // Create Up, Down, Cross-off, and Delete buttons
+            const moveUpBtn = createButton('Up', 'up-dn-btn', function() {
+                if (newTask.previousElementSibling) {
+                    tasksList.insertBefore(newTask, newTask.previousElementSibling);
+                    save && saveTasks(currentList);
+                }
+            });
+
+            const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
+                if (newTask.nextElementSibling) {
+                    tasksList.insertBefore(newTask.nextElementSibling, newTask);
+                    save && saveTasks(currentList);
+                }
+            });
+
+            const crossOffBtn = createButton('X', 'x-btn', function() {
+                newTask.classList.toggle('line-through');
+                // Not saving to Firestore on cross-off, but you could if you want to persist this state.
+            });
+
+            const deleteBtn = createButton('Del', 'del-btn', function() {
+                lastDeletedTask = newTask; // Removed unnecessary cloning
+                lastDeletedIndex = Array.from(tasksList.children).indexOf(newTask);
+                newTask.remove();
+                document.getElementById('undoBtn').style.display = 'block';
+                saveTasks(currentList); // Assume we always want to save the state after a delete.
+            });
+
+            // Add text content and buttons to the task element
+            const taskText = document.createElement('span');
+            taskText.textContent = taskContent;
+            taskText.className = 'task-text';
+            btnGroup.append(moveUpBtn, moveDownBtn, crossOffBtn, deleteBtn);
+            newTask.append(btnGroup, taskText);
+            tasksList.appendChild(newTask);
+
+            // Save tasks to Firestore if save flag is true
+            if (save) {
+                await saveTasks(currentList);
+            }
         }
-    });
-
-    const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
-        if (newTask.nextElementSibling) {
-            tasksList.insertBefore(newTask.nextElementSibling, newTask);
-            save && saveTasks(currentList);
-        }
-    });
-
-    const crossOffBtn = createButton('X', 'x-btn', function() {
-        newTask.classList.toggle('line-through');
-        // Not saving to Firestore on cross-off, but you could if you want to persist this state.
-    });
-
-    const deleteBtn = createButton('Del', 'del-btn', function() {
-        lastDeletedTask = newTask.cloneNode(true);
-        lastDeletedIndex = Array.from(tasksList.children).indexOf(newTask);
-        newTask.remove();
-        document.getElementById('undoBtn').style.display = 'block';
-        saveTasks(currentList); // Assume we always want to save the state after a delete.
-    });
-
-    // Add text content and buttons to the task element
-    const taskText = document.createElement('span');
-    taskText.textContent = taskContent;
-    taskText.className = 'task-text';
-    btnGroup.append(moveUpBtn, moveDownBtn, crossOffBtn, deleteBtn);
-    newTask.append(btnGroup, taskText);
-    tasksList.appendChild(newTask);
-
-    // Save tasks to Firestore if save flag is true
-    if (save) {
-        await saveTasks(currentList);
-    }
-}
 
 
         async function saveTasks(listName) {
