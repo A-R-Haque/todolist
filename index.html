@@ -177,12 +177,12 @@
                 }
             });
 
-            const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
-                if (newTask.nextElementSibling) {
-                    tasksList.insertBefore(newTask.nextElementSibling, newTask);
-                    save && saveTasks(currentList);
-                }
-            });
+            //const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
+             //   if (newTask.nextElementSibling) {
+               //     tasksList.insertBefore(newTask.nextElementSibling, newTask);
+                 //   save && saveTasks(currentList);
+                //}
+            //});
 
             const crossOffBtn = createButton('X', 'x-btn', function() {
                 newTask.classList.toggle('line-through');
@@ -198,7 +198,8 @@
             const taskText = document.createElement('span');
             taskText.textContent = taskContent;
             taskText.className = 'task-text';
-            btnGroup.append(moveUpBtn, moveDownBtn, crossOffBtn, deleteBtn);
+            //btnGroup.append(moveUpBtn, moveDownBtn, crossOffBtn, deleteBtn);
+            btnGroup.append(moveUpBtn, moveDownBtn, deleteBtn);
             newTask.append(btnGroup, taskText);
             tasksList.appendChild(newTask);
 
