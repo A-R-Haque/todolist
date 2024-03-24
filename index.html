@@ -177,11 +177,11 @@
                 }
             });
 
-            //const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
-             //   if (newTask.nextElementSibling) {
-               //     tasksList.insertBefore(newTask.nextElementSibling, newTask);
-                 //   save && saveTasks(currentList);
-                //}
+            const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
+                if (newTask.nextElementSibling) {
+                    tasksList.insertBefore(newTask.nextElementSibling, newTask);
+                    save && saveTasks(currentList);
+                }
             });
 
             const crossOffBtn = createButton('X', 'x-btn', function() {
