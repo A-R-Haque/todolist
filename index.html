@@ -51,7 +51,7 @@
         #tasksList {
             list-style-type: none;
             padding: 0;
-            max-width: 600px; /* Adjust as needed */
+            max-width: 600px;
             margin: auto;
         }
         #tasksList li {
@@ -68,6 +68,15 @@
             flex-grow: 1;
             margin-left: 10px;
         }
+        #richTextEditor {
+            min-height: 200px;
+            max-width: 600px;
+            margin: auto;
+            overflow-y: auto;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -80,6 +89,15 @@
             <button class="list-btn py-2 px-4 rounded" data-list="a">A</button>
             <button class="list-btn py-2 px-4 rounded" data-list="b">B</button>
         </div>
+
+        <!-- Rich Text Editor -->
+        <div class="mb-4">
+            <div id="richTextEditor" contenteditable="true" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <!-- Editable content goes here -->
+            </div>
+            <button id="saveText" class="add-btn py-2 px-4 mt-2 rounded">Save Text</button>
+        </div>
+
         <div class="mb-4">
             <input type="text" id="newTask" placeholder="Add new task" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             <button id="addTask" class="add-btn py-2 px-4 rounded">Add</button>
@@ -96,21 +114,13 @@
 
         // Firebase configuration
         const firebaseConfig = {
-              apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
-
-  authDomain: "hawklist2.firebaseapp.com",
-
-  databaseURL: "https://hawklist2-default-rtdb.firebaseio.com",
-
-  projectId: "hawklist2",
-
-  storageBucket: "hawklist2.appspot.com",
-
-  messagingSenderId: "60663152972",
-
-  appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
-
-
+            apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
+            authDomain: "hawklist2.firebaseapp.com",
+            databaseURL: "https://hawklist2-default-rtdb.firebaseio.com",
+            projectId: "hawklist2",
+            storageBucket: "hawklist2.appspot.com",
+            messagingSenderId: "60663152972",
+            appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
         };
 
         // Initialize Firebase
@@ -118,9 +128,6 @@
         const db = getFirestore(app);
 
         let currentList = 'work'; // Default list
-        let lastDeletedTask;
-        let lastDeletedIndex;
-        
 
         document.addEventListener('DOMContentLoaded', async function() {
             document.querySelectorAll('.list-btn').forEach(button => {
@@ -130,25 +137,18 @@
                     currentList = this.getAttribute('data-list');
                     document.getElementById('tasksList').innerHTML = '';
                     await loadTasks(currentList);
+                    await loadRichText(currentList); // Load rich text content when switching lists
                 });
             });
-            
+
             await loadTasks(currentList); // Load the default "work" list tasks
+            await loadRichText(currentList); // Load the default "work" rich text content
         });
-        document.addEventListener('DOMContentLoaded', async function() {
-    const workButton = document.querySelector('[data-list="work"]');
-    workButton.classList.add('selected'); // Add 'selected' class to indicate it's pressed by default
-    await loadTasks('work'); // Load the "Work" list by default
-});
-
-// Rest of your code...
-
-
 
         document.getElementById('addTask').addEventListener('click', async function() {
             const newTaskValue = document.getElementById('newTask').value;
             if (newTaskValue.trim() !== '') {
-                addTask(newTaskValue, false, true); // removed await for consistency since addTask isn't async
+                addTask(newTaskValue, false, true);
                 document.getElementById('newTask').value = '';
             }
         });
@@ -169,46 +169,24 @@
                 return button;
             }
 
-            // Create Up, Down, Cross-off, and Delete buttons
-            const moveUpBtn = createButton('Up', 'up-dn-btn', function() {
-                if (newTask.previousElementSibling) {
-                    tasksList.insertBefore(newTask, newTask.previousElementSibling);
-                    save && saveTasks(currentList);
-                }
-            });
-
-            const moveDownBtn = createButton('Dn', 'up-dn-btn', function() {
-                if (newTask.nextElementSibling) {
-                    tasksList.insertBefore(newTask.nextElementSibling, newTask);
-                    save && saveTasks(currentList);
-                }
-            });
-
-            const crossOffBtn = createButton('X', 'x-btn', function() {
-                newTask.classList.toggle('line-through');
-                save && saveTasks(currentList); // Save the tasks after toggling cross-off state
-            });
-
+            // Create Delete button
             const deleteBtn = createButton('Del', 'del-btn', function() {
-                lastDeletedTask =                 newTask.remove();
-                saveTasks(currentList); // Assume we always want to save the state after a delete.
+                newTask.remove();
+                saveTasks(currentList);
             });
 
             // Add text content and buttons to the task element
             const taskText = document.createElement('span');
             taskText.textContent = taskContent;
             taskText.className = 'task-text';
-            //btnGroup.append(moveUpBtn, moveDownBtn, crossOffBtn, deleteBtn);
             btnGroup.append(deleteBtn);
             newTask.append(btnGroup, taskText);
             tasksList.appendChild(newTask);
 
-            // Apply the cross-off state if passed in
             if (crossedOff) {
                 newTask.classList.add('line-through');
             }
 
-            // Save tasks to Firestore if save flag is true
             if (save) {
                 await saveTasks(currentList);
             }
@@ -219,34 +197,52 @@
             const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
                 return { 
                     text: task.querySelector('.task-text').textContent,
-                    crossedOff: task.classList.contains('line-through') // Include cross-off state
+                    crossedOff: task.classList.contains('line-through')
                 };
             });
 
-            // Save the array of tasks to a single document identified by listName
             const listDocRef = doc(db, "lists", listName);
-            await setDoc(listDocRef, { tasks: tasks });
+            await setDoc(listDocRef, { tasks: tasks }, { merge: true });
         }
 
         async function loadTasks(listName) {
             const listDocRef = doc(db, "lists", listName);
             const docSnap = await getDoc(listDocRef);
 
-            document.getElementById('tasksList').innerHTML = ''; // Clear current tasks
+            document.getElementById('tasksList').innerHTML = '';
 
             if (docSnap.exists()) {
                 docSnap.data().tasks.forEach(task => {
-                    addTask(task.text, task.crossedOff); // Pass cross-off state to addTask function
+                    addTask(task.text, task.crossedOff);
                 });
             } else {
                 console.log("No such document!");
             }
         }
 
-        window.addEventListener('beforeunload', async function(event) {
-            await saveTasks(currentList);
+        // Save the rich text content to Firestore
+        async function saveRichText(listName, content) {
+            const listDocRef = doc(db, "lists", listName);
+            await setDoc(listDocRef, { richText: content }, { merge: true });
+        }
+
+        // Load the rich text content from Firestore
+        async function loadRichText(listName) {
+            const listDocRef = doc(db, "lists", listName);
+            const docSnap = await getDoc(listDocRef);
+
+            if (docSnap.exists() && docSnap.data().richText) {
+                document.getElementById('richTextEditor').innerHTML = docSnap.data().richText;
+            } else {
+                document.getElementById('richTextEditor').innerHTML = '';
+            }
+        }
+
+        // Save rich text on button click
+        document.getElementById('saveText').addEventListener('click', async function() {
+            const richTextContent = document.getElementById('richTextEditor').innerHTML;
+            await saveRichText(currentList, richTextContent);
         });
     </script>
 </body>
 </html>
-
