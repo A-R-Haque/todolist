@@ -25,6 +25,7 @@
             background-color: white;
             padding: 10px;
             border-radius: 5px;
+            text-align: left; /* Left justify pasted text */
         }
     </style>
 </head>
@@ -38,11 +39,7 @@
                 <!-- Editable content goes here -->
             </div>
             <button id="saveText" class="btn mt-2">Save Text</button>
-        </div>
-
-        <!-- Download Saved Text as File -->
-        <div class="mb-4">
-            <button id="downloadFile" class="btn">Download Saved Text</button>
+            <button id="clearText" class="btn mt-2">Clear Text</button>
         </div>
     </div>
 
@@ -84,23 +81,9 @@
             }
         });
 
-        // Download saved text as a file
-        document.getElementById('downloadFile').addEventListener('click', async function() {
-            const listDocRef = doc(db, "workPage", "richText");
-            const docSnap = await getDoc(listDocRef);
-
-            if (docSnap.exists()) {
-                const content = docSnap.data().content;
-                const blob = new Blob([content], { type: "text/html" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "saved_text.html";
-                a.click();
-                URL.revokeObjectURL(url);
-            } else {
-                alert("No text content saved.");
-            }
+        // Clear text content
+        document.getElementById('clearText').addEventListener('click', function() {
+            document.getElementById('richTextEditor').innerHTML = '';
         });
     </script>
 </body>
