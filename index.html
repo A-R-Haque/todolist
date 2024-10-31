@@ -88,43 +88,26 @@
 
         // Save rich text content for each editor
         async function saveText(editorNum) {
-            console.log(`Saving text for editor ${editorNum}`);
             const richTextContent = document.getElementById(`richTextEditor${editorNum}`).innerHTML;
             const listDocRef = doc(db, `workPage`, `richText${editorNum}`);
-            try {
-                await setDoc(listDocRef, { content: richTextContent }, { merge: true });
-                console.log(`Text saved for editor ${editorNum}`);
-            } catch (error) {
-                console.error(`Error saving text for editor ${editorNum}:`, error);
-            }
+            await setDoc(listDocRef, { content: richTextContent }, { merge: true });
         }
 
         // Load rich text content for each editor on page load
         document.addEventListener('DOMContentLoaded', async function() {
             for (let i = 1; i <= 4; i++) {
-                console.log(`Loading text for editor ${i}`);
                 const listDocRef = doc(db, `workPage`, `richText${i}`);
-                try {
-                    const docSnap = await getDoc(listDocRef);
-                    if (docSnap.exists()) {
-                        document.getElementById(`richTextEditor${i}`).innerHTML = docSnap.data().content;
-                        console.log(`Text loaded for editor ${i}`);
-                    } else {
-                        console.log(`No saved content for editor ${i}`);
-                    }
-                } catch (error) {
-                    console.error(`Error loading text for editor ${i}:`, error);
+                const docSnap = await getDoc(listDocRef);
+
+                if (docSnap.exists()) {
+                    document.getElementById(`richTextEditor${i}`).innerHTML = docSnap.data().content;
                 }
             }
         });
 
-        // Clear text content and auto-save the cleared state for each editor
-        async function clearText(editorNum) {
-            console.log(`Clearing text for editor ${editorNum}`);
-            const editor = document.getElementById(`richTextEditor${editorNum}`);
-            editor.innerHTML = '';
-            await saveText(editorNum); // Save the cleared state
-            console.log(`Text cleared and saved for editor ${editorNum}`);
+        // Clear text content for each editor
+        function clearText(editorNum) {
+            document.getElementById(`richTextEditor${editorNum}`).innerHTML = '';
         }
     </script>
 </body>
