@@ -37,17 +37,32 @@
         <h1 class="text-2xl mb-4">Work Page</h1>
 
         <!-- Rich Text Editors -->
-        <div id="editors">
-            ${[1, 2, 3, 4].map(num => `
-            <div class="editor-container" id="editorContainer${num}">
-                <h2 class="text-xl">Editor ${num}</h2>
-                <div id="richTextEditor${num}" contenteditable="true" class="richTextEditor shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <!-- Editable content goes here -->
-                </div>
-                <button class="btn mt-2" onclick="saveText(${num})">Save Text</button>
-                <button class="btn mt-2" onclick="clearText(${num})">Clear Text</button>
-            </div>
-            `).join('')}
+        <div class="editor-container" id="editorContainer1">
+            <h2 class="text-xl">Editor 1</h2>
+            <div id="richTextEditor1" contenteditable="true" class="richTextEditor shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></div>
+            <button class="btn mt-2" onclick="saveText(1)">Save Text</button>
+            <button class="btn mt-2" onclick="clearText(1)">Clear Text</button>
+        </div>
+
+        <div class="editor-container" id="editorContainer2">
+            <h2 class="text-xl">Editor 2</h2>
+            <div id="richTextEditor2" contenteditable="true" class="richTextEditor shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></div>
+            <button class="btn mt-2" onclick="saveText(2)">Save Text</button>
+            <button class="btn mt-2" onclick="clearText(2)">Clear Text</button>
+        </div>
+
+        <div class="editor-container" id="editorContainer3">
+            <h2 class="text-xl">Editor 3</h2>
+            <div id="richTextEditor3" contenteditable="true" class="richTextEditor shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></div>
+            <button class="btn mt-2" onclick="saveText(3)">Save Text</button>
+            <button class="btn mt-2" onclick="clearText(3)">Clear Text</button>
+        </div>
+
+        <div class="editor-container" id="editorContainer4">
+            <h2 class="text-xl">Editor 4</h2>
+            <div id="richTextEditor4" contenteditable="true" class="richTextEditor shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></div>
+            <button class="btn mt-2" onclick="saveText(4)">Save Text</button>
+            <button class="btn mt-2" onclick="clearText(4)">Clear Text</button>
         </div>
     </div>
 
