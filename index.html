@@ -3,70 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawk List</title>
+    <title>Hawk List - Work</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="hawk1.ico">
-    <link rel="icon" href="favicon.png" type="hawk1.png">
-    <link rel="icon" href="favicon.svg" type="hawk1.svg">
     <style>
         body {
             background-color: silver;
         }
         .btn {
-            width: 30px;
-            height: 30px;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0;
-        }
-        .list-btn {
-            border: 1px solid black;
-            color: white;
-            background-color: gray;
-        }
-        .list-btn.selected {
-            background-color: darkorange;
-            color: black;
-        }
-        .add-btn {
             background-color: black;
             color: white;
-        }
-        .up-dn-btn {
-            background-color: lightblue;
-            border: 1px solid black;
-            color: white;
-        }
-        .x-btn {
-            background-color: lightgreen;
-            color: black;
-            border: 1px solid black;
-        }
-        .del-btn {
-            background-color: red;
-            color: black;
-            border: 1px solid black;
-        }
-        #tasksList {
-            list-style-type: none;
-            padding: 0;
-            max-width: 600px;
-            margin: auto;
-        }
-        #tasksList li {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 10px 0;
-            word-wrap: break-word;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .task-text {
-            flex-grow: 1;
-            margin-left: 10px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 5px;
+            cursor: pointer;
         }
         #richTextEditor {
             min-height: 200px;
@@ -81,167 +30,96 @@
 </head>
 <body>
     <div class="container mx-auto p-4 text-center">
-        <img src="hawk1.gif" alt="List" class="mx-auto mb-4">
-        <div class="flex justify-center gap-2 mb-4">
-            <button class="list-btn py-2 px-4 rounded" data-list="work">Work</button>
-            <button class="list-btn py-2 px-4 rounded" data-list="personal">Personal</button>
-            <button class="list-btn py-2 px-4 rounded" data-list="research">Research</button>
-            <button class="list-btn py-2 px-4 rounded" data-list="a">A</button>
-            <button class="list-btn py-2 px-4 rounded" data-list="b">B</button>
-        </div>
+        <h1 class="text-2xl mb-4">Work Page</h1>
 
         <!-- Rich Text Editor -->
         <div class="mb-4">
             <div id="richTextEditor" contenteditable="true" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 <!-- Editable content goes here -->
             </div>
-            <button id="saveText" class="add-btn py-2 px-4 mt-2 rounded">Save Text</button>
+            <button id="saveText" class="btn mt-2">Save Text</button>
         </div>
 
+        <!-- File Upload Section -->
         <div class="mb-4">
-            <input type="text" id="newTask" placeholder="Add new task" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <button id="addTask" class="add-btn py-2 px-4 rounded">Add</button>
+            <input type="file" id="fileInput" accept=".pdf,.doc,.docx" class="shadow appearance-none border rounded py-2 px-3">
+            <button id="uploadFile" class="btn">Upload File</button>
         </div>
-        <ul id="tasksList">
-            <!-- Tasks will be added here dynamically -->
-        </ul>
+
+        <!-- File Download Section -->
+        <div class="mb-4">
+            <button id="downloadFile" class="btn">Download Saved Text</button>
+        </div>
     </div>
 
     <script type="module">
         // Firebase setup
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
-            authDomain: "hawklist2.firebaseapp.com",
-            databaseURL: "https://hawklist2-default-rtdb.firebaseio.com",
-            projectId: "hawklist2",
-            storageBucket: "hawklist2.appspot.com",
-            messagingSenderId: "60663152972",
-            appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
-        let currentList = 'work'; // Default list
-
-        document.addEventListener('DOMContentLoaded', async function() {
-            document.querySelectorAll('.list-btn').forEach(button => {
-                button.addEventListener('click', async function() {
-                    document.querySelectorAll('.list-btn').forEach(btn => btn.classList.remove('selected'));
-                    this.classList.add('selected');
-                    currentList = this.getAttribute('data-list');
-                    document.getElementById('tasksList').innerHTML = '';
-                    await loadTasks(currentList);
-                    await loadRichText(currentList); // Load rich text content when switching lists
-                });
-            });
-
-            await loadTasks(currentList); // Load the default "work" list tasks
-            await loadRichText(currentList); // Load the default "work" rich text content
-        });
-
-        document.getElementById('addTask').addEventListener('click', async function() {
-            const newTaskValue = document.getElementById('newTask').value;
-            if (newTaskValue.trim() !== '') {
-                addTask(newTaskValue, false, true);
-                document.getElementById('newTask').value = '';
-            }
-        });
-
-        async function addTask(taskContent, crossedOff, save = false) {
-            const tasksList = document.getElementById('tasksList');
-            const newTask = document.createElement('li');
-            newTask.className = 'bg-white p-2 mt-2 cursor-pointer flex items-center justify-between';
-            const btnGroup = document.createElement('div');
-            btnGroup.className = 'flex items-center mr-2';
-
-            // Function to create a button
-            function createButton(text, classes, onClick) {
-                const button = document.createElement('button');
-                button.textContent = text;
-                button.className = `btn ${classes}`;
-                button.addEventListener('click', onClick);
-                return button;
-            }
-
-            // Create Delete button
-            const deleteBtn = createButton('Del', 'del-btn', function() {
-                newTask.remove();
-                saveTasks(currentList);
-            });
-
-            // Add text content and buttons to the task element
-            const taskText = document.createElement('span');
-            taskText.textContent = taskContent;
-            taskText.className = 'task-text';
-            btnGroup.append(deleteBtn);
-            newTask.append(btnGroup, taskText);
-            tasksList.appendChild(newTask);
-
-            if (crossedOff) {
-                newTask.classList.add('line-through');
-            }
-
-            if (save) {
-                await saveTasks(currentList);
-            }
-        }
-
-        async function saveTasks(listName) {
-            const tasksList = document.getElementById('tasksList');
-            const tasks = Array.from(tasksList.querySelectorAll('li')).map(task => {
-                return { 
-                    text: task.querySelector('.task-text').textContent,
-                    crossedOff: task.classList.contains('line-through')
-                };
-            });
-
-            const listDocRef = doc(db, "lists", listName);
-            await setDoc(listDocRef, { tasks: tasks }, { merge: true });
-        }
-
-        async function loadTasks(listName) {
-            const listDocRef = doc(db, "lists", listName);
-            const docSnap = await getDoc(listDocRef);
-
-            document.getElementById('tasksList').innerHTML = '';
-
-            if (docSnap.exists()) {
-                docSnap.data().tasks.forEach(task => {
-                    addTask(task.text, task.crossedOff);
-                });
-            } else {
-                console.log("No such document!");
-            }
-        }
-
-        // Save the rich text content to Firestore
-        async function saveRichText(listName, content) {
-            const listDocRef = doc(db, "lists", listName);
-            await setDoc(listDocRef, { richText: content }, { merge: true });
-        }
-
-        // Load the rich text content from Firestore
-        async function loadRichText(listName) {
-            const listDocRef = doc(db, "lists", listName);
-            const docSnap = await getDoc(listDocRef);
-
-            if (docSnap.exists() && docSnap.data().richText) {
-                document.getElementById('richTextEditor').innerHTML = docSnap.data().richText;
-            } else {
-                document.getElementById('richTextEditor').innerHTML = '';
-            }
-        }
-
-        // Save rich text on button click
+        // Save rich text content
         document.getElementById('saveText').addEventListener('click', async function() {
             const richTextContent = document.getElementById('richTextEditor').innerHTML;
-            await saveRichText(currentList, richTextContent);
+            const listDocRef = doc(db, "workPage", "richText");
+            await setDoc(listDocRef, { content: richTextContent }, { merge: true });
+            alert("Text saved successfully!");
+        });
+
+        // Load rich text content on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            const listDocRef = doc(db, "workPage", "richText");
+            const docSnap = await getDoc(listDocRef);
+
+            if (docSnap.exists()) {
+                document.getElementById('richTextEditor').innerHTML = docSnap.data().content;
+            }
+        });
+
+        // Upload file
+        document.getElementById('uploadFile').addEventListener('click', async function() {
+            const file = document.getElementById('fileInput').files[0];
+            if (file) {
+                const storageRef = ref(storage, `workPageFiles/${file.name}`);
+                await uploadBytes(storageRef, file);
+                alert("File uploaded successfully!");
+            } else {
+                alert("Please select a file to upload.");
+            }
+        });
+
+        // Download saved text as a file
+        document.getElementById('downloadFile').addEventListener('click', async function() {
+            const listDocRef = doc(db, "workPage", "richText");
+            const docSnap = await getDoc(listDocRef);
+
+            if (docSnap.exists()) {
+                const content = docSnap.data().content;
+                const blob = new Blob([content], { type: "text/html" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "saved_text.html";
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                alert("No text content saved.");
+            }
         });
     </script>
 </body>
