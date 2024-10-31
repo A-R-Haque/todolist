@@ -17,7 +17,10 @@
             margin: 5px;
             cursor: pointer;
         }
-        #richTextEditor {
+        .editor-container {
+            margin-bottom: 2rem;
+        }
+        .richTextEditor {
             min-height: 200px;
             max-width: 600px;
             margin: auto;
@@ -33,13 +36,18 @@
     <div class="container mx-auto p-4 text-center">
         <h1 class="text-2xl mb-4">Work Page</h1>
 
-        <!-- Rich Text Editor -->
-        <div class="mb-4">
-            <div id="richTextEditor" contenteditable="true" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <!-- Editable content goes here -->
+        <!-- Rich Text Editors -->
+        <div id="editors">
+            ${[1, 2, 3, 4].map(num => `
+            <div class="editor-container" id="editorContainer${num}">
+                <h2 class="text-xl">Editor ${num}</h2>
+                <div id="richTextEditor${num}" contenteditable="true" class="richTextEditor shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <!-- Editable content goes here -->
+                </div>
+                <button class="btn mt-2" onclick="saveText(${num})">Save Text</button>
+                <button class="btn mt-2" onclick="clearText(${num})">Clear Text</button>
             </div>
-            <button id="saveText" class="btn mt-2">Save Text</button>
-            <button id="clearText" class="btn mt-2">Clear Text</button>
+            `).join('')}
         </div>
     </div>
 
@@ -63,28 +71,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Save rich text content
-        document.getElementById('saveText').addEventListener('click', async function() {
-            const richTextContent = document.getElementById('richTextEditor').innerHTML;
-            const listDocRef = doc(db, "workPage", "richText");
+        // Save rich text content for each editor
+        window.saveText = async function(editorNum) {
+            const richTextContent = document.getElementById(`richTextEditor${editorNum}`).innerHTML;
+            const listDocRef = doc(db, `workPage`, `richText${editorNum}`);
             await setDoc(listDocRef, { content: richTextContent }, { merge: true });
-            alert("Text saved successfully!");
-        });
+            alert(`Text in Editor ${editorNum} saved successfully!`);
+        }
 
-        // Load rich text content on page load
+        // Load rich text content for each editor on page load
         document.addEventListener('DOMContentLoaded', async function() {
-            const listDocRef = doc(db, "workPage", "richText");
-            const docSnap = await getDoc(listDocRef);
+            for (let i = 1; i <= 4; i++) {
+                const listDocRef = doc(db, `workPage`, `richText${i}`);
+                const docSnap = await getDoc(listDocRef);
 
-            if (docSnap.exists()) {
-                document.getElementById('richTextEditor').innerHTML = docSnap.data().content;
+                if (docSnap.exists()) {
+                    document.getElementById(`richTextEditor${i}`).innerHTML = docSnap.data().content;
+                }
             }
         });
 
-        // Clear text content
-        document.getElementById('clearText').addEventListener('click', function() {
-            document.getElementById('richTextEditor').innerHTML = '';
-        });
+        // Clear text content for each editor
+        window.clearText = function(editorNum) {
+            document.getElementById(`richTextEditor${editorNum}`).innerHTML = '';
+        }
     </script>
 </body>
 </html>
