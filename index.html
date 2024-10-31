@@ -91,7 +91,6 @@
             const richTextContent = document.getElementById(`richTextEditor${editorNum}`).innerHTML;
             const listDocRef = doc(db, `workPage`, `richText${editorNum}`);
             await setDoc(listDocRef, { content: richTextContent }, { merge: true });
-            alert(`Text in Editor ${editorNum} saved successfully!`);
         }
 
         // Load rich text content for each editor on page load
