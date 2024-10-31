@@ -87,10 +87,13 @@
         const db = getFirestore(app);
 
         // Save rich text content for each editor
-        async function saveText(editorNum) {
-            const richTextContent = document.getElementById(`richTextEditor${editorNum}`).innerHTML;
+        async function saveText(editorNum, content = null) {
+            // If content is null, retrieve content from the editor
+            if (content === null) {
+                content = document.getElementById(`richTextEditor${editorNum}`).innerHTML;
+            }
             const listDocRef = doc(db, `workPage`, `richText${editorNum}`);
-            await setDoc(listDocRef, { content: richTextContent }, { merge: true });
+            await setDoc(listDocRef, { content: content }, { merge: true });
         }
 
         // Load rich text content for each editor on page load
@@ -108,7 +111,7 @@
         // Clear text content and auto-save the cleared state for each editor
         async function clearText(editorNum) {
             document.getElementById(`richTextEditor${editorNum}`).innerHTML = '';
-            await saveText(editorNum); // Auto-save after clearing the editor
+            await saveText(editorNum, ''); // Explicitly save the empty content
         }
     </script>
 </body>
