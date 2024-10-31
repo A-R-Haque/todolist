@@ -73,4 +73,43 @@
 
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM
+            apiKey: "AIzaSyDsqZVGmgAp2O1SfmBE0gQmk2UKADGedPM",
+            authDomain: "hawklist2.firebaseapp.com",
+            databaseURL: "https://hawklist2-default-rtdb.firebaseio.com",
+            projectId: "hawklist2",
+            storageBucket: "hawklist2.appspot.com",
+            messagingSenderId: "60663152972",
+            appId: "1:60663152972:web:d3ee9606079a68a9cccfe9"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Save rich text content for each editor
+        window.saveText = async function(editorNum) {
+            const richTextContent = document.getElementById(`richTextEditor${editorNum}`).innerHTML;
+            const listDocRef = doc(db, `workPage`, `richText${editorNum}`);
+            await setDoc(listDocRef, { content: richTextContent }, { merge: true });
+            alert(`Text in Editor ${editorNum} saved successfully!`);
+        }
+
+        // Load rich text content for each editor on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            for (let i = 1; i <= 4; i++) {
+                const listDocRef = doc(db, `workPage`, `richText${i}`);
+                const docSnap = await getDoc(listDocRef);
+
+                if (docSnap.exists()) {
+                    document.getElementById(`richTextEditor${i}`).innerHTML = docSnap.data().content;
+                }
+            }
+        });
+
+        // Clear text content for each editor
+        window.clearText = function(editorNum) {
+            document.getElementById(`richTextEditor${editorNum}`).innerHTML = '';
+        }
+    </script>
+</body>
+</html>
