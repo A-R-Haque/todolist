@@ -34,7 +34,8 @@
 </head>
 <body>
     <div class="container mx-auto p-4 text-center">
-        <h1 class="text-2xl mb-4">Work Page</h1>
+        <h1 class="text-2xl mb-4 inline">Work Page</h1>
+        <button class="btn" onclick="saveAll()">Save All</button> <!-- Save All button -->
 
         <!-- Rich Text Editors -->
         <div class="editor-container" id="editorContainer1">
@@ -91,6 +92,13 @@
             const richTextContent = document.getElementById(`richTextEditor${editorNum}`).innerHTML;
             const listDocRef = doc(db, `workPage`, `richText${editorNum}`);
             await setDoc(listDocRef, { content: richTextContent }, { merge: true });
+        }
+
+        // Save content for all editors
+        window.saveAll = function() {
+            for (let i = 1; i <= 4; i++) {
+                saveText(i);
+            }
         }
 
         // Load rich text content for each editor on page load
