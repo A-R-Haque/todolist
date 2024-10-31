@@ -40,19 +40,6 @@
             <button id="saveText" class="btn mt-2">Save Text</button>
         </div>
 
-        <!-- File Upload Section -->
-        <div class="mb-4">
-            <input type="file" id="fileInput" accept=".pdf,.doc,.docx" class="shadow appearance-none border rounded py-2 px-3">
-            <button id="uploadFile" class="btn">Upload File</button>
-            <p id="uploadStatus" class="text-green-500 mt-2"></p> <!-- Confirmation message for upload -->
-        </div>
-
-        <!-- Uploaded Files List for Download -->
-        <div class="mb-4">
-            <h2 class="text-lg">Uploaded Files</h2>
-            <ul id="fileList" class="list-none"></ul> <!-- List of uploaded files -->
-        </div>
-
         <!-- Download Saved Text as File -->
         <div class="mb-4">
             <button id="downloadFile" class="btn">Download Saved Text</button>
@@ -63,7 +50,6 @@
         // Firebase setup
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -79,7 +65,6 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app);
 
         // Save rich text content
         document.getElementById('saveText').addEventListener('click', async function() {
@@ -97,46 +82,7 @@
             if (docSnap.exists()) {
                 document.getElementById('richTextEditor').innerHTML = docSnap.data().content;
             }
-            
-            // Load list of uploaded files
-            loadFileList();
         });
-
-        // Upload file
-        document.getElementById('uploadFile').addEventListener('click', async function() {
-            const file = document.getElementById('fileInput').files[0];
-            if (file) {
-                const storageRef = ref(storage, `workPageFiles/${file.name}`);
-                await uploadBytes(storageRef, file);
-                document.getElementById('uploadStatus').textContent = "File uploaded successfully!";
-                loadFileList(); // Reload the file list after uploading
-            } else {
-                alert("Please select a file to upload.");
-            }
-        });
-
-        // Load and display the list of uploaded files
-        async function loadFileList() {
-            const fileList = document.getElementById('fileList');
-            fileList.innerHTML = ''; // Clear the list first
-
-            const listRef = ref(storage, 'workPageFiles/');
-            const fileSnapshots = await listAll(listRef);
-
-            fileSnapshots.items.forEach(async (fileRef) => {
-                const fileURL = await getDownloadURL(fileRef);
-
-                // Create a list item for each file
-                const listItem = document.createElement('li');
-                const downloadLink = document.createElement('a');
-                downloadLink.href = fileURL;
-                downloadLink.textContent = fileRef.name;
-                downloadLink.className = "text-blue-500 underline";
-                downloadLink.target = "_blank"; // Open in new tab
-                listItem.appendChild(downloadLink);
-                fileList.appendChild(listItem);
-            });
-        }
 
         // Download saved text as a file
         document.getElementById('downloadFile').addEventListener('click', async function() {
